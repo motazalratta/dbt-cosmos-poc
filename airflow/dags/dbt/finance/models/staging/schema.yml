@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: stg_graded_products
+    columns:
+      - name: license_plate
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_grading_fees
+    columns:
+      - name: grading_cat
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_sold_products
+    columns:
+      - name: license_plate
+        tests:
+          - unique
+          - not_null
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              values: [ 'shipped' , 'cancelled' ]
+
+  - name: stg_transport_cost
+    columns:
+      - name: country
+        tests:
+          - unique
+          - not_null
+
+  - name: stg_platform_fees
+    columns:
+      - name: platform
+        tests:
+          - unique
+          - not_null

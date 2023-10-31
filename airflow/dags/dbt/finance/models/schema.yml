@@ -1,0 +1,64 @@
+version: 2
+
+models:
+  - name: fact_products
+    columns:
+      - name: license_plate
+        description: Unique reference for each product
+        tests:
+          - unique
+          - not_null
+      - name: status
+        description: Status of the order, can be shipped or cancelled
+        tests:
+          - not_null
+          - accepted_values:
+              values: [ 'shipped' , 'cancelled' ]
+      - name: platform
+        description: Name of the e-commerce platform where the product is sold (bol, ebay, …)
+        tests:
+          - not_null
+      - name: created_at
+        description: Timestamp of creation of the order
+        tests:
+          - not_null
+      - name: shipped_at
+        description: Timestamp of shipping of the order
+      - name: sold_price
+        description: Selling price of the product
+        tests:
+          - not_null
+      - name: country
+        description: Country where the product is shipped to
+      - name: channel_ref
+        description: Platform reference of the order
+        tests:
+          - not_null
+      - name: platform_fee
+        description: Platform fee for the sold product. It cloud have no value
+        tests:
+          - not_null
+      - name: grading_cat
+        description: Grading category, used to determine the fee
+        tests:
+          - not_null
+      - name: grading_time
+        description: Time spend on grading in minutes
+        tests:
+          - not_null
+      - name: grading_fee
+        description: Fee that is charged for grading
+        tests:
+          - not_null
+      - name: transport_cost
+        description: Cost that is charged for shipping
+        tests:
+          - not_null
+      - name: buybay_fee
+        description: 10% of the sold price
+        tests:
+          - not_null
+      - name: partner_payout
+        description: sold_price – buybay_fee – transport_cost – platform_fee – grading_fee
+        tests:
+          - not_null

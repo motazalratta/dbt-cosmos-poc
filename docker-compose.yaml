@@ -1,0 +1,80 @@
+version: '3'
+# Define common environment variables for GCP
+x-gcp-common-env:
+  &gcp-common-env
+  GCP_BQ_PROJECT: motaz-375621
+  GCP_BQ_DATASET: baybuy
+  GCP_BQ_FACT_PRODUCTS_TABLE: fact_products
+  GCP_GCS_BUCKET: bucket_name
+
+# Define common settings for Airflow
+x-airflow-common:
+  &airflow-common
+  build: ./airflow/.
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW_CONN_DEFAULT_GCP_CONN: '{"conn_type": "google_cloud_platform", "extra": {"key_path": "/keys/service_account.json", "scope": "https://www.googleapis.com/auth/cloud-platform", "project": "motaz-375621", "num_retries": 5}}'
+    <<: *gcp-common-env
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+    - ./airflow/plugins:/opt/airflow/plugins
+    - ./keys:/keys
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - 8080:8080
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8974/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: airflow
+      _AIRFLOW_WWW_USER_PASSWORD: airflow
+
+volumes:
+  postgres-db-volume:
